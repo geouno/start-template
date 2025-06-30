@@ -12,6 +12,9 @@ const config = defineConfig({
     tailwindcss(),
     tanstackStart(),
   ],
+  server: {
+    allowedHosts: ['.local'],
+  },
 })
 
 export default config
