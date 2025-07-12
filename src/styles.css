@@ -13,6 +13,30 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Custom animations for chat interface */
+/* FIXME: Move to better location */
+@keyframes typing {
+  0%, 60% { opacity: 1; }
+  30% { opacity: 0.3; }
+}
+
+.typing-indicator {
+  animation: typing 1.5s infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { 
+    box-shadow: 0 0 5px rgba(251, 146, 60, 0.5);
+  }
+  50% { 
+    box-shadow: 0 0 20px rgba(251, 146, 60, 0.8), 0 0 30px rgba(251, 146, 60, 0.6);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s infinite;
+}
+
 code {
   font-family:
     source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;

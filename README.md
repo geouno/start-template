@@ -1,4 +1,16 @@
-Welcome to your new TanStack app! 
+Welcome to your new TanStack app!
+
+# Code Annotations
+
+Use of standard prefixes for code comments to indicate areas that need attention.
+
+- `FIXME:`: 
+  - Broken code
+  - Suboptimal code
+  - Code that needs later revision
+- `TODO:`: 
+  - Planned features or tasks that are not yet implemented
+  - Future enhancements or improvements
 
 # Getting Started
 

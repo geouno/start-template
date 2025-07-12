@@ -13,6 +13,8 @@
     "@ai-sdk/amazon-bedrock": "^2.2.10",
     "@ai-sdk/react": "^1.1.23",
     "@modelcontextprotocol/sdk": "^1.8.0",
+    "@radix-ui/react-avatar": "^1.1.10",
+    "@radix-ui/react-slot": "^1.2.3",
     "@tailwindcss/vite": "^4.0.6",
     "@tanstack/react-router": "^1.121.2",
     "@tanstack/react-router-devtools": "^1.121.2",

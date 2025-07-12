@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useRef } from 'react'
-import { Send } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Send, User, Bot, Sparkles, Copy, Check } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import rehypeRaw from 'rehype-raw'
 import rehypeSanitize from 'rehype-sanitize'
@@ -9,95 +9,222 @@ import remarkGfm from 'remark-gfm'
 import { useChat } from '@ai-sdk/react'
 
 import { genAIResponse } from '../utils/demo.ai'
+import { Button } from '../components/ui/button'
+import { Textarea } from '../components/ui/textarea'
+import { Card } from '../components/ui/card'
+import { Avatar, AvatarFallback } from '../components/ui/avatar'
 
 import type { UIMessage } from 'ai'
 
 import '../demo.index.css'
 
-function InitalLayout({ children }: { children: React.ReactNode }) {
+function WelcomeScreen({ onGetStarted }: { onGetStarted: () => void }) {
   return (
-    <div className="flex-1 flex items-center justify-center px-4">
-      <div className="text-center max-w-3xl mx-auto w-full">
-        <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-orange-500 to-red-600 text-transparent bg-clip-text uppercase">
-          <span className="text-white">TanStack</span> Chat
-        </h1>
-        <p className="text-gray-400 mb-6 w-2/3 mx-auto text-lg">
-          You can ask me about anything, I might or might not have a good
-          answer, but you can still ask.
-        </p>
-        {children}
+    <div className="flex-1 flex items-center justify-center p-8">
+      <div className="text-center max-w-2xl mx-auto space-y-8">
+        <div className="space-y-4">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-orange-500/10 to-red-600/10 border border-orange-500/20">
+            <Sparkles className="w-4 h-4 text-orange-500" />
+            <span className="text-sm font-medium text-orange-500">AI Assistant</span>
+          </div>
+          
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-orange-500 to-red-600 text-transparent bg-clip-text">
+            TanStack Chat
+          </h1>
+          
+          <p className="text-lg text-muted-foreground max-w-lg mx-auto">
+            Your intelligent conversation partner. Ask me anything about development, 
+            get code help, or just have a friendly chat.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-xl mx-auto">
+          <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer group" onClick={onGetStarted}>
+            <div className="text-center space-y-2">
+              <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto group-hover:bg-blue-500/20 transition-colors">
+                <span className="text-blue-500 text-sm">💡</span>
+              </div>
+              <p className="text-sm font-medium">Get Ideas</p>
+              <p className="text-xs text-muted-foreground">Brainstorm solutions</p>
+            </div>
+          </Card>
+          
+          <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer group" onClick={onGetStarted}>
+            <div className="text-center space-y-2">
+              <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center mx-auto group-hover:bg-green-500/20 transition-colors">
+                <span className="text-green-500 text-sm">🚀</span>
+              </div>
+              <p className="text-sm font-medium">Code Help</p>
+              <p className="text-xs text-muted-foreground">Debug and optimize</p>
+            </div>
+          </Card>
+          
+          <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer group" onClick={onGetStarted}>
+            <div className="text-center space-y-2">
+              <div className="w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto group-hover:bg-purple-500/20 transition-colors">
+                <span className="text-purple-500 text-sm">💬</span>
+              </div>
+              <p className="text-sm font-medium">Just Chat</p>
+              <p className="text-xs text-muted-foreground">Casual conversation</p>
+            </div>
+          </Card>
+        </div>
       </div>
     </div>
   )
 }
 
-function ChattingLayout({ children }: { children: React.ReactNode }) {
+function MessageBubble({ message, onCopy }: { message: UIMessage; onCopy: (content: string) => void }) {
+  const isUser = message.role === 'user'
+  
   return (
-    <div className="absolute bottom-0 right-0 left-64 bg-gray-900/80 backdrop-blur-sm border-t border-orange-500/10">
-      <div className="max-w-3xl mx-auto w-full px-4 py-3">{children}</div>
+    <div className={`flex gap-4 ${isUser ? 'flex-row-reverse' : 'flex-row'} group`}>
+      <Avatar className="w-8 h-8 shrink-0">
+        <AvatarFallback className={isUser ? 'bg-blue-500' : 'bg-gradient-to-r from-orange-500 to-red-600'}>
+          {isUser ? <User className="w-4 h-4 text-white" /> : <Bot className="w-4 h-4 text-white" />}
+        </AvatarFallback>
+      </Avatar>
+      
+      <div className={`flex-1 max-w-3xl ${isUser ? 'flex justify-end' : ''}`}>
+        <Card className={`p-4 ${isUser ? 'bg-blue-500 text-white' : 'bg-card'} relative group-hover:shadow-md transition-shadow`}>
+          {isUser ? (
+            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+          ) : (
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              <ReactMarkdown
+                rehypePlugins={[rehypeRaw, rehypeSanitize, rehypeHighlight]}
+                remarkPlugins={[remarkGfm]}
+              >
+                {message.content}
+              </ReactMarkdown>
+            </div>
+          )}
+          
+          {!isUser && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
+              onClick={() => onCopy(message.content)}
+            >
+              <Copy className="w-3 h-3" />
+            </Button>
+          )}
+        </Card>
+      </div>
     </div>
   )
 }
 
-function Messages({ messages }: { messages: Array<UIMessage> }) {
-  const messagesContainerRef = useRef<HTMLDivElement>(null)
+function TypingIndicator() {
+  return (
+    <div className="flex gap-4 group">
+      <Avatar className="w-8 h-8 shrink-0">
+        <AvatarFallback className="bg-gradient-to-r from-orange-500 to-red-600">
+          <Bot className="w-4 h-4 text-white" />
+        </AvatarFallback>
+      </Avatar>
+      
+      <div className="flex-1 max-w-3xl">
+        <Card className="p-4 bg-card">
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1">
+              <div className="w-2 h-2 bg-orange-500 rounded-full typing-indicator" style={{ animationDelay: '0ms' }} />
+              <div className="w-2 h-2 bg-orange-500 rounded-full typing-indicator" style={{ animationDelay: '200ms' }} />
+              <div className="w-2 h-2 bg-orange-500 rounded-full typing-indicator" style={{ animationDelay: '400ms' }} />
+            </div>
+            <span className="text-sm text-muted-foreground">AI is thinking...</span>
+          </div>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+function ChatMessages({ messages, onCopy, isLoading }: { messages: Array<UIMessage>; onCopy: (content: string) => void; isLoading: boolean }) {
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop =
-        messagesContainerRef.current.scrollHeight
-    }
-  }, [messages])
-
-  if (!messages.length) {
-    return null
-  }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, isLoading])
 
   return (
-    <div ref={messagesContainerRef} className="flex-1 overflow-y-auto pb-24">
-      <div className="max-w-3xl mx-auto w-full px-4">
-        {messages.map(({ id, role, content }) => (
-          <div
-            key={id}
-            className={`py-6 ${
-              role === 'assistant'
-                ? 'bg-gradient-to-r from-orange-500/5 to-red-600/5'
-                : 'bg-transparent'
-            }`}
-          >
-            <div className="flex items-start gap-4 max-w-3xl mx-auto w-full">
-              {role === 'assistant' ? (
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 mt-2 flex items-center justify-center text-sm font-medium text-white flex-shrink-0">
-                  AI
-                </div>
-              ) : (
-                <div className="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center text-sm font-medium text-white flex-shrink-0">
-                  Y
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <ReactMarkdown
-                  className="prose dark:prose-invert max-w-none"
-                  rehypePlugins={[
-                    rehypeRaw,
-                    rehypeSanitize,
-                    rehypeHighlight,
-                    remarkGfm,
-                  ]}
-                >
-                  {content}
-                </ReactMarkdown>
-              </div>
-            </div>
-          </div>
+    <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {messages.map((message) => (
+          <MessageBubble key={message.id} message={message} onCopy={onCopy} />
         ))}
+        {isLoading && <TypingIndicator />}
+      </div>
+      <div ref={messagesEndRef} />
+    </div>
+  )
+}
+
+function ChatInput({ input, isLoading, onInputChange, onSubmit }: {
+  input: string
+  isLoading: boolean
+  onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
+  onSubmit: (e: React.FormEvent) => void
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current
+    if (textarea) {
+      textarea.style.height = 'auto'
+      textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px'
+    }
+  }
+
+  useEffect(() => {
+    adjustTextareaHeight()
+  }, [input])
+
+  return (
+    <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="max-w-4xl mx-auto p-6">
+        <form onSubmit={onSubmit} className="space-y-4">
+          <div className="relative">
+            <Textarea
+              ref={textareaRef}
+              value={input}
+              onChange={onInputChange}
+              placeholder="Type your message here..."
+              className="min-h-[60px] max-h-[200px] resize-none pr-12 text-base"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  onSubmit(e)
+                }
+              }}
+              onInput={adjustTextareaHeight}
+              disabled={isLoading}
+            />
+            
+            <Button
+              type="submit"
+              size="sm"
+              disabled={!input.trim() || isLoading}
+              className="absolute right-2 bottom-2 h-8 w-8 p-0"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
+          
+          <div className="flex justify-between items-center text-xs text-muted-foreground">
+            <p>Press Enter to send, Shift+Enter for new line</p>
+            <p>{input.length}/2000</p>
+          </div>
+        </form>
       </div>
     </div>
   )
 }
 
 function ChatPage() {
-  const { messages, input, handleInputChange, handleSubmit } = useChat({
+  const [copied, setCopied] = useState(false)
+  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     initialMessages: [],
     fetch: (_url, options) => {
       const { messages } = JSON.parse(options!.body! as string)
@@ -109,47 +236,53 @@ function ChatPage() {
     },
   })
 
-  const Layout = messages.length ? ChattingLayout : InitalLayout
+  const handleCopy = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }
+
+  const handleGetStarted = () => {
+    // Focus on the input when getting started
+    const textarea = document.querySelector('textarea')
+    textarea?.focus()
+  }
+
+  if (messages.length === 0) {
+    return (
+      <div className="flex flex-col h-[calc(100vh-4rem)] bg-gradient-to-br from-background to-muted/30">
+        <WelcomeScreen onGetStarted={handleGetStarted} />
+        <ChatInput
+          input={input}
+          isLoading={isLoading}
+          onInputChange={handleInputChange}
+          onSubmit={handleSubmit}
+        />
+      </div>
+    )
+  }
 
   return (
-    <div className="relative flex h-[calc(100vh-32px)] bg-gray-900">
-      <div className="flex-1 flex flex-col">
-        <Messages messages={messages} />
-
-        <Layout>
-          <form onSubmit={handleSubmit}>
-            <div className="relative max-w-xl mx-auto">
-              <textarea
-                value={input}
-                onChange={handleInputChange}
-                placeholder="Type something clever (or don't, we won't judge)..."
-                className="w-full rounded-lg border border-orange-500/20 bg-gray-800/50 pl-4 pr-12 py-3 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent resize-none overflow-hidden shadow-lg"
-                rows={1}
-                style={{ minHeight: '44px', maxHeight: '200px' }}
-                onInput={(e) => {
-                  const target = e.target as HTMLTextAreaElement
-                  target.style.height = 'auto'
-                  target.style.height =
-                    Math.min(target.scrollHeight, 200) + 'px'
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    handleSubmit(e)
-                  }
-                }}
-              />
-              <button
-                type="submit"
-                disabled={!input.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-orange-500 hover:text-orange-400 disabled:text-gray-500 transition-colors focus:outline-none"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
-          </form>
-        </Layout>
-      </div>
+    <div className="flex flex-col h-[calc(100vh-4rem)] bg-background">
+      <ChatMessages messages={messages} onCopy={handleCopy} isLoading={isLoading} />
+      <ChatInput
+        input={input}
+        isLoading={isLoading}
+        onInputChange={handleInputChange}
+        onSubmit={handleSubmit}
+      />
+      
+      {/* Copy notification */}
+      {copied && (
+        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in slide-in-from-bottom-2">
+          <Check className="w-4 h-4" />
+          <span className="text-sm">Copied to clipboard!</span>
+        </div>
+      )}
     </div>
   )
 }
