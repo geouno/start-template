@@ -10,6 +10,13 @@ export const server = new McpServer({
 export const transports: { [sessionId: string]: SSEServerTransport } = {}
 
 server.tool('getGuitars', {}, async ({}) => {
+  // Use dynamic base URL that works in both dev and production
+  const baseUrl = typeof window !== 'undefined' 
+    ? window.location.origin 
+    : process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : 'http://localhost:3000'
+      
   return {
     content: [
       {
@@ -20,7 +27,7 @@ server.tool('getGuitars', {}, async ({}) => {
             name: guitar.name,
             description: guitar.description,
             price: guitar.price,
-            image: `http://localhost:3000${guitar.image}`,
+            image: `${baseUrl}${guitar.image}`,
           })),
         ),
       },
