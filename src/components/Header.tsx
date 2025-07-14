@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Home, MessageSquare, Guitar, Server, Database, Sparkles, Monitor, Moon, Sun } from 'lucide-react'
 
 import TanStackChatHeaderUser from '../integrations/tanchat/header-user.tsx'
@@ -7,7 +7,23 @@ import { useTheme } from '../lib/theme-context'
 
 export default function Header() {
   const [isVisible, setIsVisible] = useState(false)
+  const [navWidth, setNavWidth] = useState(0)
+  const navRef = useRef<HTMLElement>(null)
   const { theme, cycleTheme } = useTheme()
+
+  useEffect(() => {
+    const measureWidth = () => {
+      if (navRef.current) {
+        // Simple measurement - just get the scroll width
+        const width = Math.min(navRef.current.scrollWidth, window.innerWidth - 32) // More padding, minimum width
+        setNavWidth(width)
+      }
+    }
+    
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(measureWidth, 0)
+    return () => clearTimeout(timer)
+  }, [theme, isVisible]) // Recalculate when theme or visibility changes
 
   const navItems = [
     { to: '/', label: 'Home', icon: Home },
@@ -41,7 +57,7 @@ export default function Header() {
       {/* Morphing notch that grows into header */}
       <div className="fixed top-0 left-1/2 transform -translate-x-1/2 z-50">
         <div 
-          className={`relative ${isVisible && 'pt-3'}`}
+          className={`relative ${isVisible && 'p-5 pt-3'}`}
           onMouseEnter={() => setIsVisible(true)}
           onMouseLeave={() => setIsVisible(false)}
         >
@@ -49,26 +65,25 @@ export default function Header() {
           <div 
             className={`
               bg-foreground/90 backdrop-blur-xl border border-border/50 shadow-2xl
-              transition-all duration-500 ease-out cursor-pointer
+              transition-all duration-250 ease-out cursor-pointer overflow-hidden
               ${isVisible 
-                ? 'w-auto h-auto rounded-2xl p-4 min-w-max'
-                : 'w-20 h-5 rounded-b-xl hover:w-20 hover:h-5' // FIXME: redundant styles
+                ? `h-16 rounded-[1rem]` 
+                : 'h-7 rounded-b-[0.75rem]'
               }
             `}
             style={{
               transformOrigin: 'top center',
+              width: isVisible ? `${navWidth}px` : '7rem',
             }}
           >
             {/* Notch state - visible when collapsed */}
-            {!isVisible && (
-              <div className="flex items-center justify-center h-full">
-                <div className="w-2 h-0.5 bg-background/60 rounded-full" />
-              </div>
-            )}
+            <div className={`flex items-center justify-center h-full transition-opacity duration-300 ${isVisible ? 'opacity-0' : 'opacity-100'}`}>
+              <div className="w-2 h-0.5 bg-background/60 rounded-full" />
+            </div>
 
             {/* Header state - visible when expanded */}
-            {isVisible && (
-              <nav className="flex items-center gap-1 animate-in fade-in duration-300">
+            <div className={`absolute inset-0 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+              <nav ref={navRef} className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1 h-full px-4 whitespace-nowrap">
                 {navItems.map((item, index) => (
                   <Link
                     key={item.to}
@@ -113,7 +128,7 @@ export default function Header() {
                   <TanStackChatHeaderUser />
                 </div>
               </nav>
-            )}
+            </div>
           </div>
         </div>
       </div>
