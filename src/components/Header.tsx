@@ -9,7 +9,30 @@ export default function Header() {
   const [isVisible, setIsVisible] = useState(false)
   const [navWidth, setNavWidth] = useState(0)
   const navRef = useRef<HTMLElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const { theme, cycleTheme } = useTheme()
+
+  const handleMouseEnter = () => {
+    setIsVisible(true)
+  }
+
+  const handleMouseLeave = () => {
+    // Only hide if no child element has focus
+    if (containerRef.current && !containerRef.current.matches(':focus-within')) {
+      setIsVisible(false)
+    }
+  }
+
+  const handleFocusIn = () => {
+    setIsVisible(true)
+  }
+
+  const handleFocusOut = (e: React.FocusEvent) => {
+    // Only hide if focus is moving outside the container
+    if (containerRef.current && !containerRef.current.contains(e.relatedTarget as Node)) {
+      setIsVisible(false)
+    }
+  }
 
   useEffect(() => {
     const measureWidth = () => {
@@ -57,9 +80,12 @@ export default function Header() {
       {/* Morphing notch that grows into header */}
       <div className="fixed top-0 left-1/2 transform -translate-x-1/2 z-50">
         <div 
+          ref={containerRef}
           className={`relative ${isVisible && 'p-5 pt-3'}`}
-          onMouseEnter={() => setIsVisible(true)}
-          onMouseLeave={() => setIsVisible(false)}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onFocusCapture={handleFocusIn}
+          onBlurCapture={handleFocusOut}
         >
           {/* The morphing container - grows from notch to full header */}
           <div 
